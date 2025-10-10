@@ -46,6 +46,12 @@
             <button type="button" class="navbar-toggler text-muted mt-2 p-0 mr-3 collapseSidebar">
                 <i class="fe fe-menu navbar-toggler-icon"></i>
             </button>
+
+            <!-- System Header Title -->
+            <h5 class="navbar-brand mb-0 text-uppercase fw-bold text-primary">
+                Human Resource Management System 3
+            </h5>
+
             <form class="form-inline mr-auto searchform text-muted">
                 <input class="form-control mr-sm-2 bg-transparent border-0 pl-4 text-muted" type="search"
                     placeholder="Type something..." aria-label="Search">

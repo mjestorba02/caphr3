@@ -8,7 +8,6 @@
 
         <h4 class="mb-4">Employee Timesheet Report</h4>
 
-        {{-- Filter Form --}}
         <form method="GET" action="{{ route('timesheet.report') }}" 
             class="card p-3 shadow-sm mb-4 bg-body-tertiary border-0">
             <div class="row g-3 align-items-end">
@@ -26,7 +25,7 @@
 
                 <div class="col-md-3">
                     <label>Position</label>
-                    <select name="position" class="form-control">
+                    <select name="position" id="positionSelect" class="form-control">
                         <option value="">-- All Positions --</option>
                         @foreach($positions as $pos)
                             <option value="{{ $pos }}" {{ $position == $pos ? 'selected' : '' }}>
@@ -37,6 +36,14 @@
                 </div>
 
                 <div class="col-md-3">
+                    <label>Employee</label>
+                    <select name="employee_id" id="employeeSelect" class="form-control">
+                        <option value="">-- All Employees --</option>
+                        {{-- dynamically loaded via AJAX --}}
+                    </select>
+                </div>
+
+                <div class="col-md-3 mt-4">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-chart-bar"></i> Generate Report
                     </button>
@@ -234,6 +241,31 @@ document.addEventListener("DOMContentLoaded", function () {
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
         });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const positionSelect = document.getElementById("positionSelect");
+    const employeeSelect = document.getElementById("employeeSelect");
+
+    positionSelect.addEventListener("change", function() {
+        const position = this.value;
+        employeeSelect.innerHTML = '<option value="">Loading...</option>';
+
+        fetch(`/hr/timesheet/get-employees/${position}`)
+            .then(res => res.json())
+            .then(data => {
+                employeeSelect.innerHTML = '<option value="">-- All Employees --</option>';
+                data.forEach(emp => {
+                    const opt = document.createElement("option");
+                    opt.value = emp.id;
+                    opt.textContent = emp.name;
+                    employeeSelect.appendChild(opt);
+                });
+            })
+            .catch(() => {
+                employeeSelect.innerHTML = '<option value="">-- Error loading employees --</option>';
+            });
     });
 });
 </script>

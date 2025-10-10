@@ -97,10 +97,9 @@
                                             onclick="openModal({{ $req->id }}, 'Denied')">
                                             Deny
                                         </button>
+                                    @elseif(in_array($req->status, ['Approved', 'Denied']))
+                                        -
                                     @endif
-                                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal({{ $req->id }})">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
                                 </td>
                             </tr>
                         @empty

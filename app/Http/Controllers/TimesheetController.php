@@ -230,6 +230,16 @@ class TimesheetController extends Controller
         return view('hr.timesheet_report', compact('positions', 'reportData', 'from', 'to', 'position'));
     }
 
+    public function getEmployees($position)
+    {
+        $employees = \App\Models\User::where('position', $position)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($employees);
+    }
+
     public function download($employee, Request $request)
     {
         // Filter the data for that specific employee
