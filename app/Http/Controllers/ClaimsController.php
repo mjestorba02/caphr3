@@ -48,4 +48,51 @@ class ClaimsController extends Controller
 
         return redirect()->route('claims.index')->with('success', 'Claim added successfully!');
     }
+
+    public function show($id)
+    {
+        $claim = Claim::with('user')->findOrFail($id);
+        return view('hr.claims', compact('claim'));
+    }
+
+    public function edit($id)
+    {
+        $claim = Claim::findOrFail($id);
+        $employees = User::all();
+        return view('hr.claims', compact('claim', 'employees'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $claim = Claim::findOrFail($id);
+
+        $request->validate([
+            'user_id'              => 'required|exists:users,id',
+            'type_of_claim'        => 'required|string|max:255',
+            'attached_document'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'claim_date'           => 'required|date',
+            'claim_amount'         => 'required|numeric|min:0',
+            'reimbursement_amount' => 'nullable|numeric|min:0',
+            'reimbursement_date'   => 'nullable|date',
+            'status'               => 'required|in:Paid,Pending,Denied',
+        ]);
+
+        $filePath = $claim->attached_document;
+        if ($request->hasFile('attached_document')) {
+            $filePath = $request->file('attached_document')->store('claims_documents', 'public');
+        }
+
+        $claim->update([
+            'user_id'              => $request->user_id,
+            'type_of_claim'        => $request->type_of_claim,
+            'attached_document'    => $filePath,
+            'claim_date'           => $request->claim_date,
+            'claim_amount'         => $request->claim_amount,
+            'reimbursement_amount' => $request->reimbursement_amount ?? 0,
+            'reimbursement_date'   => $request->reimbursement_date,
+            'status'               => $request->status,
+        ]);
+
+        return redirect()->route('claims.index')->with('success', 'Claim updated successfully!');
+    }
 }

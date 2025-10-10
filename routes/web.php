@@ -98,9 +98,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/shifts/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
         Route::delete('/shifts/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
 
-        //Claims and Reimbursment
+        //Claims and Reimbursement
         Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');
         Route::post('/claims', [ClaimsController::class, 'store'])->name('claims.store');
+        Route::put('/claims/{id}', [ClaimsController::class, 'update'])->name('claims.update');
+        Route::delete('/claims/{id}', [ClaimsController::class, 'destroy'])->name('claims.destroy');
 
         Route::get('/timesheet/report', [TimesheetController::class, 'report'])->name('timesheet.report');
 
