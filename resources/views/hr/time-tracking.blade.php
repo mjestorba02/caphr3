@@ -72,7 +72,7 @@
                                 <td>{{ $rec->employee->name }}</td>
                                 <td>{{ $rec->date }}</td>
                                 <td>{{ $rec->time_in }}</td>
-                                <td>{{ $rec->time_out }}</td>
+                                <td>{{ $rec->time_out ? $rec->time_out : '-' }}</td>
                                 <td>{{ number_format($rec->total_hours, 2) }} hrs</td>
                                 <td>
                                     {{ number_format($rec->undertime, 2) }} hrs

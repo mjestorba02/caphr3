@@ -122,53 +122,104 @@
                     <span>Main Content</span>
                 </p>
                 <ul class="navbar-nav flex-fill w-100 mb-2">
+
+                    {{-- Time & Attendance --}}
                     <li class="nav-item">
-                        <a href="{{ route('timetracking.index') }}" class="nav-link">
+                        <a href="{{ route('timetracking.index') }}"
+                        class="nav-link {{ Request::routeIs('timetracking.*') ? 'active' : '' }}">
                             <i class="fe fe-clock fe-16"></i>
                             <span class="ml-3 item-text">Time & Attendance</span>
                         </a>
                     </li>
+
+                    {{-- Timesheet Dropdown --}}
+                    @php
+                        $isTimesheetActive = Request::routeIs('timesheet.*');
+                    @endphp
                     <li class="nav-item">
-                        <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#timesheetMenu" role="button" aria-expanded="false" aria-controls="timesheetMenu">
+                        <a class="nav-link d-flex justify-content-between align-items-center {{ $isTimesheetActive ? 'active' : 'collapsed' }}"
+                        data-bs-toggle="collapse"
+                        href="#timesheetMenu"
+                        role="button"
+                        aria-expanded="{{ $isTimesheetActive ? 'true' : 'false' }}"
+                        aria-controls="timesheetMenu">
                             <span>
                                 <i class="fe fe-file-text fe-16"></i>
                                 <span class="ml-3 item-text">Timesheet</span>
                             </span>
                             <i class="fe fe-chevron-down small"></i>
                         </a>
-                        <div class="collapse" id="timesheetMenu">
+                        <div class="collapse {{ $isTimesheetActive ? 'show' : '' }}" id="timesheetMenu">
                             <ul class="nav flex-column ml-4">
                                 <li class="nav-item">
-                                    <a href="{{ route('timesheet.index') }}" class="nav-link small">
+                                    <a href="{{ route('timesheet.index') }}"
+                                    class="nav-link small {{ Request::routeIs('timesheet.index') ? 'active' : '' }}">
                                         <i class="fe fe-edit me-2"></i> Record
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{ route('timesheet.report') }}" class="nav-link small">
+                                    <a href="{{ route('timesheet.report') }}"
+                                    class="nav-link small {{ Request::routeIs('timesheet.report') ? 'active' : '' }}">
                                         <i class="fe fe-bar-chart me-2"></i> Report
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </li>
+
+                    {{-- Leave Management --}}
                     <li class="nav-item">
-                        <a href="{{ route('leave.index') }}" class="nav-link">
+                        <a href="{{ route('leave.index') }}"
+                        class="nav-link {{ Request::routeIs('leave.*') ? 'active' : '' }}">
                             <i class="fe fe-calendar fe-16"></i>
                             <span class="ml-3 item-text">Leave Management</span>
                         </a>
                     </li>
+
+                    {{-- Shift & Schedule Dropdown --}}
+                    @php
+                        $isShiftActive = Request::routeIs('shifts.*') || Request::routeIs('overtime.*');
+                    @endphp
                     <li class="nav-item">
-                        <a href="{{ route('shifts.index') }}" class="nav-link">
-                            <i class="fe fe-users fe-16"></i>
-                            <span class="ml-3 item-text">Shift & Schedule</span>
+                        <a class="nav-link d-flex justify-content-between align-items-center {{ $isShiftActive ? 'active' : 'collapsed' }}"
+                        data-bs-toggle="collapse"
+                        href="#shiftMenu"
+                        role="button"
+                        aria-expanded="{{ $isShiftActive ? 'true' : 'false' }}"
+                        aria-controls="shiftMenu">
+                            <span>
+                                <i class="fe fe-users fe-16"></i>
+                                <span class="ml-3 item-text">Shift & Schedule</span>
+                            </span>
+                            <i class="fe fe-chevron-down small"></i>
                         </a>
+                        <div class="collapse {{ $isShiftActive ? 'show' : '' }}" id="shiftMenu">
+                            <ul class="nav flex-column ml-4">
+                                <li class="nav-item">
+                                    <a href="{{ route('shifts.index') }}"
+                                    class="nav-link small {{ Request::routeIs('shifts.index') ? 'active' : '' }}">
+                                        <i class="fe fe-calendar me-2"></i> Schedules
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('overtime.index') }}"
+                                    class="nav-link small {{ Request::routeIs('overtime.index') ? 'active' : '' }}">
+                                        <i class="fe fe-clock me-2"></i> Request Overtime
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
+
+                    {{-- Claims --}}
                     <li class="nav-item">
-                        <a href="{{ route('claims.index') }}" class="nav-link">
+                        <a href="{{ route('claims.index') }}"
+                        class="nav-link {{ Request::routeIs('claims.*') ? 'active' : '' }}">
                             <i class="fe fe-credit-card fe-16"></i>
                             <span class="ml-3 item-text">Claims & Reimbursement</span>
                         </a>
                     </li>
+
                 </ul>
             </nav>
         </aside>
