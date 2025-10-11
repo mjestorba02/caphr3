@@ -38,7 +38,7 @@
                 <div class="col-md-3">
                     <label>Employee</label>
                     <select name="employee_id" id="employeeSelect" class="form-control">
-                        <option value="">-- All Employees --</option>
+                        <option value="">-- Select Employees --</option>
                         {{-- dynamically loaded via AJAX --}}
                     </select>
                 </div>
