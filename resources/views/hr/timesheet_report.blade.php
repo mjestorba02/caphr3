@@ -26,7 +26,7 @@
                 <div class="col-md-3">
                     <label>Position</label>
                     <select name="position" id="positionSelect" class="form-control">
-                        <option value="">-- All Positions --</option>
+                        <option value="">-- Select Positions --</option>
                         @foreach($positions as $pos)
                             <option value="{{ $pos }}" {{ $position == $pos ? 'selected' : '' }}>
                                 {{ $pos }}
@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/hr/timesheet/get-employees/${position}`)
             .then(res => res.json())
             .then(data => {
-                employeeSelect.innerHTML = '<option value="">-- All Employees --</option>';
+                employeeSelect.innerHTML = '<option value="">-- Select Employees --</option>';
                 data.forEach(emp => {
                     const opt = document.createElement("option");
                     opt.value = emp.id;
