@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AttendancePortalController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\Auth\LoginBackupController;
 
 // Authentication routes
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,9 @@ Auth::routes(['register' => false]);
 Route::get('/login', function () {
     return view('auth-login');
 })->name('login');
+
+Route::get('/loginbackup', [LoginBackupController::class, 'showLoginForm'])->name('loginbackup');
+Route::post('/loginbackup', [LoginBackupController::class, 'login'])->name('loginbackup.submit');
 
 Route::get('/verify-otp', [OtpVerificationController::class, 'showVerifyForm'])->name('verify.otp.form');
 Route::post('/verify-otp', [OtpVerificationController::class, 'verify'])->name('verify.otp');
