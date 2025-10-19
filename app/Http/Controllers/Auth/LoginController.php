@@ -4,43 +4,50 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendOtpMail;
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
     use AuthenticatesUsers;
 
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
     protected $redirectTo = '/dashboard';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
         $this->middleware('auth')->only('logout');
     }
+
     /**
-     * Override failed login response to show custom error.
+     * When user logs in successfully, generate OTP and redirect to verification page.
      */
-    protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
+    protected function authenticated(Request $request, $user)
+    {
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        $user->otp = $otp;
+        $user->otp_expires_at = Carbon::now()->addMinutes(5); // expires in 5 mins
+        $user->save();
+
+        // Send OTP email
+        Mail::to($user->email)->send(new SendOtpMail($otp));
+
+        // Logout user temporarily
+        Auth::logout();
+
+        // Save user ID to session
+        $request->session()->put('otp_user_id', $user->id);
+
+        // Redirect to OTP verification page
+        return redirect()->route('verify.otp.form')->with('info', 'An OTP has been sent to your email.');
+    }
+
+    protected function sendFailedLoginResponse(Request $request)
     {
         return redirect()->back()
             ->withInput($request->only('email', 'remember'))

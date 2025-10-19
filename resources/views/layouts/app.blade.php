@@ -173,13 +173,39 @@
                         </div>
                     </li>
 
-                    {{-- Leave Management --}}
+                    {{-- Leave Management Dropdown --}}
+                    @php
+                        $isLeaveActive = Request::routeIs('leave.*') || Request::routeIs('leave.manual.*');
+                    @endphp
                     <li class="nav-item">
-                        <a href="{{ route('leave.index') }}"
-                        class="nav-link {{ Request::routeIs('leave.*') ? 'active' : '' }}">
-                            <i class="fe fe-calendar fe-16"></i>
-                            <span class="ml-3 item-text">Leave Management</span>
+                        <a class="nav-link d-flex justify-content-between align-items-center {{ $isLeaveActive ? 'active' : 'collapsed' }}"
+                            data-bs-toggle="collapse"
+                            href="#leaveMenu"
+                            role="button"
+                            aria-expanded="{{ $isLeaveActive ? 'true' : 'false' }}"
+                            aria-controls="leaveMenu">
+                            <span>
+                                <i class="fe fe-calendar fe-16"></i>
+                                <span class="ml-3 item-text">Leave Management</span>
+                            </span>
+                            <i class="fe fe-chevron-down small"></i>
                         </a>
+                        <div class="collapse {{ $isLeaveActive ? 'show' : '' }}" id="leaveMenu">
+                            <ul class="nav flex-column ml-4">
+                                <li class="nav-item">
+                                    <a href="{{ route('leave.index') }}"
+                                        class="nav-link small {{ Request::routeIs('leave.index') ? 'active' : '' }}">
+                                        <i class="fe fe-settings me-2"></i> Manage/Assign Leave
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('leave.manual.index') }}"
+                                        class="nav-link small {{ Request::routeIs('leave.manual.index') ? 'active' : '' }}">
+                                        <i class="fe fe-edit me-2"></i> Manual Leave Request
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
 
                     {{-- Shift & Schedule Dropdown --}}

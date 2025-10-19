@@ -10,10 +10,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AttendancePortalController;
 use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\LeaveRequestController;
 
 // Authentication routes
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Controllers\Auth\OtpVerificationController;
 
 // Custom register view and POST handler
 Route::get('/register', function () {
@@ -30,6 +31,9 @@ Auth::routes(['register' => false]);
 Route::get('/login', function () {
     return view('auth-login');
 })->name('login');
+
+Route::get('/verify-otp', [OtpVerificationController::class, 'showVerifyForm'])->name('verify.otp.form');
+Route::post('/verify-otp', [OtpVerificationController::class, 'verify'])->name('verify.otp');
 
 // Redirect root to login if not authenticated, else to dashboard
 Route::get('/', function () {
@@ -91,6 +95,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/leave-management', [LeaveManagementController::class, 'index'])->name('leave.index');
         Route::post('/leave-type', [LeaveManagementController::class, 'storeType'])->name('leave.storeType');
         Route::post('/employee-leave', [LeaveManagementController::class, 'storeEmployeeLeave'])->name('leave.storeEmployeeLeave');
+
+        Route::get('/manual-request', [LeaveRequestController::class, 'index'])->name('leave.manual.index');
+        Route::post('/manual-request/store', [LeaveRequestController::class, 'store'])->name('leave.manual.store');
+        Route::post('/manual-request/update/{id}', [LeaveRequestController::class, 'update'])->name('leave.manual.update');
+        Route::delete('/manual-request/delete/{id}', [LeaveRequestController::class, 'destroy'])->name('leave.manual.delete');
 
         // Shift and Schedule
         Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
