@@ -12,16 +12,71 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
+        {{-- Filter Section --}}
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Filter Timesheet Records</h5>
+                <form method="GET" action="{{ route('timesheet.index') }}" class="form-inline">
+                    <div class="form-group mr-3 mb-2">
+                        <label for="filter_employee" class="mr-2">Employee</label>
+                        <select name="employee_id" id="filter_employee" class="form-control">
+                            <option value="">-- All Employees --</option>
+                            @foreach($employees as $emp)
+                                <option value="{{ $emp->id }}" {{ $selectedEmployee == $emp->id ? 'selected' : '' }}>
+                                    {{ $emp->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mr-3 mb-2">
+                        <label for="filter_month" class="mr-2">Month</label>
+                        <select name="month" id="filter_month" class="form-control">
+                            @php
+                                $months = collect(range(1, 12))->mapWithKeys(fn($m) => [
+                                    $m => \Carbon\Carbon::createFromFormat('m', $m)->format('F')
+                                ]);
+                            @endphp
+                            @foreach($months as $num => $name)
+                                <option value="{{ $num }}" {{ $currentMonth == $num ? 'selected' : '' }}>
+                                    {{ $name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mr-3 mb-2">
+                        <label for="filter_year" class="mr-2">Year</label>
+                        <select name="year" id="filter_year" class="form-control">
+                            @php
+                                $years = collect(range(date('Y') - 5, date('Y')));
+                            @endphp
+                            @foreach($years as $year)
+                                <option value="{{ $year }}" {{ $currentYear == $year ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-2">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                    <a href="{{ route('timesheet.index') }}" class="btn btn-secondary mb-2 ml-2">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </form>
+            </div>
+        </div>
+
         {{-- Add/Edit Timesheet Form --}}
         <div class="card shadow mb-4">
             <div class="card-body">
+                <h5 class="mb-3">Generate Timesheet</h5>
                 <form id="timesheetForm" method="POST" action="{{ route('timesheet.store') }}">
                     @csrf
                     <input type="hidden" name="timesheet_id" id="timesheet_id">
 
                     <div class="form-row">
                         <div class="form-group col-md-4">
-                            <label for="employee_id">Employee</label>
+                            <label for="employee_id">Employee <span class="text-danger">*</span></label>
                             <select name="employee_id" id="employee_id" class="form-control" required>
                                 <option value="">-- Select Employee --</option>
                                 @foreach($employees as $emp)
@@ -31,12 +86,12 @@
                         </div>
 
                         <div class="form-group col-md-3">
-                            <label for="date_from">From</label>
+                            <label for="date_from">From <span class="text-danger">*</span></label>
                             <input type="date" name="date_from" id="date_from" class="form-control" required>
                         </div>
 
                         <div class="form-group col-md-3">
-                            <label for="date_to">To</label>
+                            <label for="date_to">To <span class="text-danger">*</span></label>
                             <input type="date" name="date_to" id="date_to" class="form-control" required>
                         </div>
 
@@ -61,13 +116,21 @@
         {{-- Timesheet Table --}}
         <div class="card shadow">
             <div class="card-body">
-                <h5 class="mb-3">Timesheet Records</h5>
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Employee</th>
-                            <th>From</th>
+                <h5 class="mb-3">Timesheet Records
+                    @if($selectedEmployee)
+                        <small class="text-muted">- Filtered by Employee</small>
+                    @endif
+                    @if($currentMonth || $currentYear)
+                        <small class="text-muted">- Filtered by {{ \Carbon\Carbon::createFromFormat('m', $currentMonth)->format('F') }} {{ $currentYear }}</small>
+                    @endif
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Employee</th>
+                                <th>From</th>
                             <th>To</th>
                             <th>Position</th>
                             <th>Notes</th>
@@ -75,7 +138,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($timesheets as $sheet)
+                        @forelse($timesheets as $sheet)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $sheet->employee->name }}</td>
@@ -86,9 +149,13 @@
                                 <td>
                                     {{-- Edit button --}}
                                     <button type="button" 
-                                        class="btn btn-sm btn-warning"
-                                        onclick="editTimesheet({{ $sheet }})">
-                                        Edit
+                                        class="btn btn-sm btn-warning editTimesheet"
+                                        data-id="{{ $sheet->id }}"
+                                        data-employee-id="{{ $sheet->employee_id }}"
+                                        data-from="{{ $sheet->from_date }}"
+                                        data-to="{{ $sheet->to_date }}"
+                                        data-notes="{{ $sheet->notes }}">
+                                        <i class="fas fa-edit"></i> Edit
                                     </button>
 
                                     {{-- View button --}}
@@ -100,21 +167,29 @@
                                         data-department="{{ $sheet->employee->department }}"
                                         data-from="{{ $sheet->from_date }}"
                                         data-to="{{ $sheet->to_date }}">
-                                        View
+                                        <i class="fas fa-eye"></i> View
                                     </button>
 
                                     {{-- Delete form --}}
                                     <form action="{{ route('timesheet.destroy', $sheet->id) }}" method="POST" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</button>
+                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
                                     </form>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No timesheet records found for the selected filters</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -173,9 +248,10 @@
     function editTimesheet(sheet) {
         document.getElementById('timesheet_id').value = sheet.id;
         document.getElementById('employee_id').value = sheet.employee_id;
-        document.getElementById('date_from').value = sheet.date;
-        document.getElementById('date_to').value = sheet.date;
-        document.getElementById('notes').value = sheet.notes;
+        // use new column names if available
+        document.getElementById('date_from').value = sheet.from_date ?? sheet.date ?? '';
+        document.getElementById('date_to').value = sheet.to_date ?? sheet.date ?? '';
+        document.getElementById('notes').value = sheet.notes ?? '';
 
         let form = document.getElementById('timesheetForm');
         form.action = `/hr/timesheet/${sheet.id}`;
@@ -250,6 +326,26 @@
                 const modalEl = document.getElementById("timesheetModal");
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
+            });
+        });
+
+        // Attach handlers for edit buttons (use data attributes to avoid inline JSON issues)
+        document.querySelectorAll('.editTimesheet').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const sheet = {
+                    id: this.dataset.id,
+                    employee_id: this.dataset.employeeId || this.dataset.employeeId || this.getAttribute('data-employee-id'),
+                    from_date: this.dataset.from || this.getAttribute('data-from'),
+                    to_date: this.dataset.to || this.getAttribute('data-to'),
+                    notes: this.dataset.notes || this.getAttribute('data-notes') || ''
+                };
+
+                // Call existing helper
+                try {
+                    editTimesheet(sheet);
+                } catch (e) {
+                    console.error('editTimesheet failed:', e);
+                }
             });
         });
     });

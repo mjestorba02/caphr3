@@ -8,17 +8,41 @@ use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class TimesheetController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $timesheets = Timesheet::with('employee')->latest()->get();
+        $query = Timesheet::with('employee');
+
+        // Filter by employee
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        // Filter by month and year
+        if ($request->filled('month') && $request->filled('year')) {
+            $month = str_pad($request->month, 2, '0', STR_PAD_LEFT);
+            $year = $request->year;
+            
+            $query->whereYear('from_date', $year)
+                  ->whereMonth('from_date', $month);
+        }
+
+        $timesheets = $query->latest()->get();
         $employees = User::all();
 
-        return view('hr.timesheet', compact('timesheets', 'employees'));
+        // Get current month and year for default filter display
+        $currentMonth = $request->month ?? Carbon::now()->month;
+        $currentYear = $request->year ?? Carbon::now()->year;
+        $selectedEmployee = $request->employee_id ?? null;
+
+        return view('hr.timesheet', compact('timesheets', 'employees', 'currentMonth', 'currentYear', 'selectedEmployee'));
     }
 
     public function store(Request $request)
@@ -46,13 +70,12 @@ class TimesheetController extends Controller
         Timesheet::create($data);
 
         return redirect()->route('timesheet.index')
-                        ->with('success', "1 timesheet record saved from attendance.");
+                        ->with('success', 'Timesheet generated successfully.');
     }
 
     protected function buildFromAttendance($employeeId, $notes, $dateFrom, $dateTo)
     {
-        // Get attendance logs for the range
-        $attendance = \App\Models\TimeTracking::where('employee_id', $employeeId)
+        $attendance = TimeTracking::where('employee_id', $employeeId)
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->get();
 
@@ -60,23 +83,18 @@ class TimesheetController extends Controller
             return null;
         }
 
-        $employee = \App\Models\User::find($employeeId);
+        $employee = User::find($employeeId);
 
-        // Calculate total hours & overtime across the range
+        // Compute totals from attendance records
         $totalHours = 0;
-        $overtime   = 0;
+        $totalOvertime = 0;
 
         foreach ($attendance as $log) {
-            if ($log->start_time && $log->end_time) {
-                $start  = Carbon::parse($log->start_time);
-                $end    = Carbon::parse($log->end_time);
-                $hours  = $end->floatDiffInHours($start);
+            $hours = (float) ($log->total_hours ?? 0);
+            $totalHours += $hours;
 
-                $totalHours += $hours;
-
-                if ($hours > 8) {
-                    $overtime += ($hours - 8);
-                }
+            if ($hours > 8) {
+                $totalOvertime += ($hours - 8);
             }
         }
 
@@ -84,11 +102,11 @@ class TimesheetController extends Controller
             'employee_id' => $employeeId,
             'from_date'   => $dateFrom,
             'to_date'     => $dateTo,
-            'hours_worked'=> $totalHours,
-            'overtime'    => $overtime,
-            'position'    => $employee->position ?? null,
-            'notes'       => $notes,
-            'day'         => null,
+            'hours_worked' => round($totalHours, 2),
+            'overtime'     => round($totalOvertime, 2),
+            'position'     => $employee->position ?? null,
+            'notes'        => $notes,
+            'day'          => null,
         ];
     }
 
@@ -101,24 +119,21 @@ class TimesheetController extends Controller
             'notes'       => 'nullable|string',
         ]);
 
-        $period = CarbonPeriod::create($request->date_from, $request->date_to);
+        $data = $this->buildFromAttendance(
+            $request->employee_id,
+            $request->notes,
+            $request->date_from,
+            $request->date_to
+        );
 
-        $updated = 0;
-        foreach ($period as $date) {
-            $data = $this->buildFromAttendance($request->employee_id, $date->format('Y-m-d'), $request->notes);
-
-            if ($data) {
-                $timesheet->update($data);
-                $updated++;
-            }
-        }
-
-        if ($updated === 0) {
+        if (! $data) {
             return back()->withErrors(['date_from' => 'No attendance record found for the selected range.']);
         }
 
+        $timesheet->update($data);
+
         return redirect()->route('timesheet.index')
-                         ->with('success', "$updated timesheet record(s) updated from attendance.");
+                        ->with('success', 'Timesheet updated successfully.');
     }
 
     public function destroy(Timesheet $timesheet)
@@ -274,5 +289,38 @@ class TimesheetController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("Timesheet_{$employee}_{$from}_to_{$to}.pdf");
+    }
+
+    public function seedTestAttendance($employeeId = null)
+    {
+        $employeeId = $employeeId ?? 2;
+
+        // Create 10 test attendance records for Feb 2026
+        $records = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $date = Carbon::createFromFormat('Y-m-d', sprintf('2026-02-%02d', $i));
+
+            TimeTracking::create([
+                'employee_id' => $employeeId,
+                'date' => $date,
+                'time_in' => '08:00:00',
+                'time_out' => '17:00:00',
+                'total_hours' => 9.0,
+                'overtime' => 1.0,
+                'undertime' => 0,
+                'status' => 'Present',
+            ]);
+
+            $records[] = "Feb {$i}, 2026 - 9 hours";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test data seeded successfully',
+            'employee_id' => $employeeId,
+            'records_created' => count($records),
+            'date_range' => '2026-02-01 to 2026-02-10',
+            'details' => $records,
+        ]);
     }
 }

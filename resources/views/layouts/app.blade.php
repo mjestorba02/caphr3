@@ -184,7 +184,7 @@
 
                     {{-- Shift & Schedule Dropdown --}}
                     @php
-                        $isShiftActive = Request::routeIs('shifts.*') || Request::routeIs('overtime.*');
+                        $isShiftActive = Request::routeIs('shifts.*') || Request::routeIs('shift-library.*') || Request::routeIs('overtime.*');
                     @endphp
                     <li class="nav-item">
                         <a class="nav-link d-flex justify-content-between align-items-center {{ $isShiftActive ? 'active' : 'collapsed' }}"
@@ -201,6 +201,12 @@
                         </a>
                         <div class="collapse {{ $isShiftActive ? 'show' : '' }}" id="shiftMenu">
                             <ul class="nav flex-column ml-4">
+                                <li class="nav-item">
+                                    <a href="{{ route('shift-library.index') }}"
+                                    class="nav-link small {{ Request::routeIs('shift-library.*') ? 'active' : '' }}">
+                                        <i class="fe fe-settings me-2"></i> Shift Library
+                                    </a>
+                                </li>
                                 <li class="nav-item">
                                     <a href="{{ route('shifts.index') }}"
                                     class="nav-link small {{ Request::routeIs('shifts.index') ? 'active' : '' }}">

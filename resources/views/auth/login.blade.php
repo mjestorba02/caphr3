@@ -36,7 +36,7 @@
                 <input type="checkbox" name="remember" id="remember">
                 <label for="remember">Stay logged in</label>
             </div>
-            <button class="btn btn-lg btn-primary btn-block w-100" type="submit">Let me in</button>
+            <button class="btn btn-lg btn-primary btn-block w-100" type="submit">Sign in</button>
             <div class="mt-3">
                 <a href="{{ route('register') }}" class="text-primary">Create an account</a>
             </div>

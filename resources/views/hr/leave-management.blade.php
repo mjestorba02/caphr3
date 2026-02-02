@@ -61,7 +61,7 @@
         </div>
 
         {{-- Employee Leave Assignment --}}
-        <div class="card shadow mb-4">
+        <!-- <div class="card shadow mb-4">
             <div class="card-body">
                 <h5>Assign Leave to Employee</h5>
                 <form method="POST" action="{{ route('leave.storeEmployeeLeave') }}">
@@ -128,7 +128,7 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div> -->
 
     </div>
 </div>

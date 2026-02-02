@@ -84,6 +84,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/timesheet/{timesheet}', [TimesheetController::class, 'update'])->name('timesheet.update');
         Route::delete('/timesheet/{timesheet}', [TimesheetController::class, 'destroy'])->name('timesheet.destroy');
 
+        // Debug: seed test attendance rows (authenticated only)
+        Route::get('/timesheet/seed-test/{employeeId?}', [TimesheetController::class, 'seedTestAttendance'])->name('timesheet.seedTest');
+
         //Timesheet Data
         Route::get('/timesheet/employee/{employeeId}/details', [TimesheetController::class, 'details'])->name('timesheet.employee.details');
 
@@ -97,6 +100,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
         Route::put('/shifts/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
         Route::delete('/shifts/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+
+        // Shift Library Management
+        Route::get('/shift-library', [App\Http\Controllers\ShiftLibraryController::class, 'index'])->name('shift-library.index');
+        Route::post('/shift-library', [App\Http\Controllers\ShiftLibraryController::class, 'store'])->name('shift-library.store');
+        Route::put('/shift-library/{shiftLibrary}', [App\Http\Controllers\ShiftLibraryController::class, 'update'])->name('shift-library.update');
+        Route::delete('/shift-library/{shiftLibrary}', [App\Http\Controllers\ShiftLibraryController::class, 'destroy'])->name('shift-library.destroy');
+        Route::get('/shift-library/api/all', [App\Http\Controllers\ShiftLibraryController::class, 'getAll'])->name('shift-library.getAll');
 
         //Claims and Reimbursement
         Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');

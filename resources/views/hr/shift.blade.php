@@ -12,32 +12,48 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        {{-- Add Shift Form --}}
+        {{-- Shift Library Link --}}
+        <div class="mb-3">
+            <a href="{{ route('shift-library.index') }}" class="btn btn-info">
+                <i class="fas fa-cog"></i> Manage Shift Library
+            </a>
+        </div>
+
+        {{-- Assign Employee Shift Form --}}
         <div class="card shadow mb-4">
             <div class="card-body">
+                <h5>Assign Employee to Shift</h5>
                 <form method="POST" action="{{ route('shifts.store') }}">
                     @csrf
                     <div class="form-row">
                         <div class="form-group col-md-3">
-                            <label>Employee</label>
+                            <label>Employee <span class="text-danger">*</span></label>
                             <select name="employee_id" class="form-control" required>
-                                <option value="">-- Select --</option>
+                                <option value="">-- Select Employee --</option>
                                 @foreach($employees as $emp)
                                     <option value="{{ $emp->id }}">{{ $emp->id }} - {{ $emp->name }}</option>
                                 @endforeach
                             </select>
+                            @error('employee_id')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
                         </div>
-                        <div class="form-group col-md-2">
-                            <label>Shift Type</label>
-                            <select name="shift_type" class="form-control" required>
-                                <option value="">-- Select --</option>
-                                <option value="morning">Morning</option>
-                                <option value="afternoon">Afternoon</option>
-                                <option value="night">Night</option>
+                        <div class="form-group col-md-3">
+                            <label>Select Shift <span class="text-danger">*</span></label>
+                            <select name="shift_library_id" class="form-control" required>
+                                <option value="">-- Select Shift --</option>
+                                @foreach($shiftLibraries as $lib)
+                                    <option value="{{ $lib->id }}">
+                                        {{ $lib->shift_name }} ({{ \Carbon\Carbon::parse($lib->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($lib->end_time)->format('h:i A') }})
+                                    </option>
+                                @endforeach
                             </select>
+                            @error('shift_library_id')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div class="form-group col-md-6">
-                            <label class="d-block mb-2">Select Days</label>
+                            <label class="d-block mb-2">Select Working Days <span class="text-danger">*</span></label>
                             <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
                                 @php
                                     $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -48,62 +64,75 @@
                                     </label>
                                 @endforeach
                             </div>
-                        </div>
-                        <div class="form-group col-md-2">
-                            <label>Start Time</label>
-                            <input type="time" name="start_time" class="form-control" required>
-                        </div>
-                        <div class="form-group col-md-2">
-                            <label>End Time</label>
-                            <input type="time" name="end_time" class="form-control" required>
-                        </div>
-                        <div class="form-group col-md-1">
-                            <label>Break</label>
-                            <input type="text" name="break_time" class="form-control" placeholder="e.g. 1h">
+                            @error('days')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Shift</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Assign Shift
+                    </button>
                 </form>
             </div>
         </div>
 
-        {{-- Shifts Table --}}
+        {{-- Employee Shifts Table --}}
         <div class="card shadow">
             <div class="card-body">
-                <h5 class="mb-3">Scheduled Shifts</h5>
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Employee ID</th>
-                            <th>Employee Name</th>
-                            <th>Shift Type</th>
-                            <th>Day</th>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Break</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($shifts as $shift)
+                <h5 class="mb-3">Assigned Employee Shifts</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $shift->employee_id }}</td>
-                                <td>{{ $shift->employee->name ?? 'N/A' }}</td>
-                                <td class="text-capitalize">{{ $shift->shift_type }}</td>
-                                <td>{{ implode(', ', $shift->days ?? []) }}</td>
-                                <td>{{ \Carbon\Carbon::parse($shift->start_time)->format('h:i A') }}</td>
-                                <td>{{ \Carbon\Carbon::parse($shift->end_time)->format('h:i A') }}</td>
-                                <td>{{ $shift->break_time ?? '—' }}</td>
+                                <th>#</th>
+                                <th>Employee ID</th>
+                                <th>Employee Name</th>
+                                <th>Shift Name</th>
+                                <th>Time Range</th>
+                                <th>Working Days</th>
+                                <th>Break</th>
+                                <th>Actions</th>
                             </tr>
-                        @endforeach
-                        @if($shifts->isEmpty())
-                            <tr>
-                                <td colspan="8" class="text-center text-muted">No shifts scheduled yet</td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($shifts as $shift)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $shift->employee_id }}</td>
+                                    <td><strong>{{ $shift->employee->name ?? 'N/A' }}</strong></td>
+                                    <td>{{ $shift->shiftLibrary->shift_name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($shift->shiftLibrary)
+                                            {{ \Carbon\Carbon::parse($shift->shiftLibrary->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($shift->shiftLibrary->end_time)->format('h:i A') }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                    <td>{{ implode(', ', $shift->days ?? []) }}</td>
+                                    <td>{{ $shift->shiftLibrary->break_time ?? '—' }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-warning" 
+                                            onclick="editShift({{ $shift->id }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        
+                                        <form action="{{ route('shifts.destroy', $shift->id) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-sm btn-danger" onclick="return confirm('Remove this assignment?')">
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No shifts assigned yet. Create shifts in the Shift Library first!</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -118,5 +147,9 @@
             });
         });
     });
+
+    function editShift(shiftId) {
+        alert('Edit shift functionality coming soon!');
+    }
 </script>
 @endsection
